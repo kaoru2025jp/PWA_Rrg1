@@ -155,14 +155,7 @@
       const { T1, T2 } = getUrlParams();
       const box = document.getElementById("resultBox");
       
-      if (!T1 || !T2) {
-        box.innerHTML = '<div class="loading">エラー: T1, T2が必要です</div>';
-        return;
-      }
-      if (T1 === 0 || T2 === 0) {
-        box.innerHTML = '<div class="loading">エラー: T1, T2は0以外にしてください</div>';
-        return;
-      }
+      
 
       box.innerHTML = '<div class="loading">計算中...</div>';
       
