@@ -1,67 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>計算フォーム</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>計算エンジン</title>
+
+<style>
+body { font-family:sans-serif; padding:10px; }
+input, button {
+  width:100%;
+  padding:10px;
+  margin-bottom:8px;
+  font-size:16px;
+}
+table {
+  width:100%;
+  border-collapse:collapse;
+  text-align:center;
+}
+td, th {
+  border:1px solid #ccc;
+  padding:8px;
+}
+</style>
+
 </head>
 <body>
 
-<h3>入力</h3>
+<h2>計算エンジン（成功パターン）</h2>
 
-<input id="B" placeholder="B"><br>
-<input id="S2" placeholder="S2"><br>
-<input id="S" placeholder="S"><br>
-<input id="R" placeholder="R"><br>
-<input id="r1" placeholder="r1"><br>
-<input id="r2" placeholder="r2"><br>
-<input id="g" placeholder="g"><br>
+<input id="B" placeholder="B" oninput="updateTable()">
+<input id="S2" placeholder="S2" oninput="updateTable()">
+<input id="S" placeholder="S" oninput="updateTable()">
+<input id="R" placeholder="R">
+<input id="r1" placeholder="r1">
+<input id="r2" placeholder="r2">
+<input id="g" placeholder="g">
 
-<button onclick="send()">GAS送信</button>
+<button onclick="calc()">計算する</button>
 
-<hr>
+<pre id="result"></pre>
 
-<pre id="output"></pre>
+<h3>一覧表</h3>
+<table>
+<tr><th>項目</th><th>値</th></tr>
+<tr><td>S</td><td id="valS">-</td></tr>
+<tr><td>B</td><td id="valB">-</td></tr>
+<tr><td>O1</td><td id="valO1">-</td></tr>
+<tr><td>O2</td><td id="valO2">-</td></tr>
+<tr><td>評価</td><td id="valCalc">-</td></tr>
+</table>
 
 <script>
-async function send() {
 
-  // ① 入力データ（r1 r2追加）
+const GAS_URL = "あなたのGAS URL";
+
+// ✔ GAS通信（成功パターン）
+async function calc() {
+
   const payload = {
-    B: Number(document.getElementById("B").value),
-    S2: Number(document.getElementById("S2").value),
-    S: Number(document.getElementById("S").value),
-    R: Number(document.getElementById("R").value),
-    r1: Number(document.getElementById("r1").value),
-    r2: Number(document.getElementById("r2").value),
-    g: Number(document.getElementById("g").value)
+    B: Number(B.value),
+    S2: Number(S2.value),
+    S: Number(S.value),
+    R: Number(R.value),
+    r1: Number(r1.value),
+    r2: Number(r2.value),
+    g: Number(g.value)
   };
 
-  // ② GASへ送信（T1, T2を受け取る）
-  const res = await fetch("https://script.google.com/macros/s/AKfycbyF_UKEN7yPvGe7WRFnQs9t7_Fj1SbpxA_Jw1UFEzYMKE8I3NnWCXJtofbfTRxDx047/exec", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  const box = document.getElementById("result");
+  box.textContent = "計算中...";
 
-  const data = await res.json();
+  try {
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  const T1 = Number(data.T1);
-  const T2 = Number(data.T2);
+    const data = await res.json();
 
-  // ③ JS側計算（変更なし）
-  const O1 = (payload.B - payload.S2) / T1;
-  const O2 = (payload.B - payload.S2) / T2;
+    const T1 = Number(data.T1);
+    const T2 = Number(data.T2);
 
-  const result = payload.S2 - payload.B + O1 + O2;
+    // ✔ 成功パターン：JS側計算
+    const O1 = (payload.B - payload.S2) / T1;
+    const O2 = (payload.B - payload.S2) / T2;
+    const result = payload.S2 - payload.B + O1 + O2;
 
-  // ④ 表作成
-  document.getElementById("output").textContent =
-`S2: ${payload.S2}
-B: ${payload.B}
-O1: ${O1}
-O2: ${O2}
+    // 表更新
+    document.getElementById("valO1").innerText = O1.toFixed(4);
+    document.getElementById("valO2").innerText = O2.toFixed(4);
+    document.getElementById("valCalc").innerText = result.toFixed(4);
+
+    box.textContent =
+`T1: ${T1}
+T2: ${T2}
 RESULT: ${result}`;
+
+  } catch (err) {
+    box.textContent = "エラー: " + err.message;
+  }
 }
+
+// ✔ 入力同期（成功パターン）
+function updateTable() {
+  const s = Number(S.value) || 0;
+  const b = Number(B.value) || 0;
+
+  document.getElementById("valS").innerText = s || "-";
+  document.getElementById("valB").innerText = b || "-";
+}
+
 </script>
 
 </body>
