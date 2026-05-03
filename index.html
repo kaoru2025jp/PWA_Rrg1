@@ -136,12 +136,7 @@
     window.onload = function() {
       const { T1, T2 } = getUrlParams();
       const info = document.getElementById("paramInfo");
-      if (T1 && T2) {
-        info.textContent = `受信パラメータ: T1=${T1}, T2=${T2}`;
-      } else {
-        info.textContent = 'T1, T2がURLパラメータにありません';
-      }
-    };
+      
 
     async function calc() {
       const B = Number(document.getElementById("B").value);
