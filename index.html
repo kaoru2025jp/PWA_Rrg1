@@ -1,118 +1,189 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>計算エンジン</title>
-
-<style>
-body { font-family:sans-serif; padding:10px; }
-input, button {
-  width:100%;
-  padding:10px;
-  margin-bottom:8px;
-  font-size:16px;
-}
-table {
-  width:100%;
-  border-collapse:collapse;
-  text-align:center;
-}
-td, th {
-  border:1px solid #ccc;
-  padding:8px;
-}
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Calculator v2</title>
+  <style>
+    :root {
+      --main: #4f46e5;
+      --bg: #eef2ff;
+      --card: #ffffff;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #e0e7ff, #f5f5f5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 10px;
+    }
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--main);
+    }
+    .input-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    input {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+    input:focus {
+      border-color: var(--main);
+      outline: none;
+      box-shadow: 0 0 5px rgba(79,70,229,0.3);
+    }
+    button {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      background: var(--main);
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+      width: 100%;
+    }
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    .result {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 12px;
+      background: #f9fafb;
+      border: 1px solid #ddd;
+      font-size: 15px;
+    }
+    .result div {
+      margin: 6px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    .label {
+      font-weight: bold;
+      color: #555;
+    }
+    .value {
+      font-family: monospace;
+    }
+    .loading {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+    .param-info {
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h2>計算エンジン v2</h2>
+    <div class="input-box">
+      <input id="B" type="number" placeholder="B" step="any">
+      <input id="S2" type="number" placeholder="S2" step="any">
+      <input id="S" type="number" placeholder="S" step="any">
+      <input id="R" type="number" placeholder="R" step="any">
+      <input id="r1" type="number" placeholder="r1" step="any">
+      <input id="r2" type="number" placeholder="r2" step="any">
+      <input id="g" type="number" placeholder="g" step="any">
+    </div>
+    
+    <button onclick="calc()">計算する</button>
+    <div class="param-info" id="paramInfo"></div>
+    
+    <div class="result" id="resultBox">
+      <div><span class="label">O1</span><span class="value" id="O1">-</span></div>
+      <div><span class="label">O2</span><span class="value" id="O2">-</span></div>
+    </div>
+  </div>
 
-<h2>計算エンジン（成功パターン）</h2>
+  <script>
+    // URLパラメータからT1, T2を取得する関数
+    function getUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        T1: Number(params.get('T1')),
+        T2: Number(params.get('T2'))
+      };
+    }
 
-<input id="B" placeholder="B" oninput="updateTable()">
-<input id="S2" placeholder="S2" oninput="updateTable()">
-<input id="S" placeholder="S" oninput="updateTable()">
-<input id="R" placeholder="R">
-<input id="r1" placeholder="r1">
-<input id="r2" placeholder="r2">
-<input id="g" placeholder="g">
+    // ページ読み込み時にT1, T2を表示
+    window.onload = function() {
+      const { T1, T2 } = getUrlParams();
+      const info = document.getElementById("paramInfo");
+      if (T1 && T2) {
+        info.textContent = `受信パラメータ: T1=${T1}, T2=${T2}`;
+      } else {
+        info.textContent = 'T1, T2がURLパラメータにありません';
+      }
+    };
 
-<button onclick="calc()">計算する</button>
+    async function calc() {
+      const B = Number(document.getElementById("B").value);
+      const S2 = Number(document.getElementById("S2").value);
+      const S = Number(document.getElementById("S").value);
+      const R = Number(document.getElementById("R").value);
+      const r1 = Number(document.getElementById("r1").value);
+      const r2 = Number(document.getElementById("r2").value);
+      const g = Number(document.getElementById("g").value);
+      
+      const { T1, T2 } = getUrlParams();
+      const box = document.getElementById("resultBox");
+      
+      if (!T1 || !T2) {
+        box.innerHTML = '<div class="loading">エラー: T1, T2が必要です</div>';
+        return;
+      }
+      if (T1 === 0 || T2 === 0) {
+        box.innerHTML = '<div class="loading">エラー: T1, T2は0以外にしてください</div>';
+        return;
+      }
 
-<pre id="result"></pre>
-
-<h3>一覧表</h3>
-<table>
-<tr><th>項目</th><th>値</th></tr>
-<tr><td>S</td><td id="valS">-</td></tr>
-<tr><td>B</td><td id="valB">-</td></tr>
-<tr><td>O1</td><td id="valO1">-</td></tr>
-<tr><td>O2</td><td id="valO2">-</td></tr>
-<tr><td>評価</td><td id="valCalc">-</td></tr>
-</table>
-
-<script>
-
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxJldmip4L623IfTCJNcZsjwla5fzXgQ1MOxXdCRJRTHT3kvi3HnZeFgQUoiGoT_ZY/exec";
-
-// ✔ GAS通信（成功パターン）
-async function calc() {
-
-  const payload = {
-    B: Number(B.value),
-    S2: Number(S2.value),
-    S: Number(S.value),
-    R: Number(R.value),
-    r1: Number(r1.value),
-    r2: Number(r2.value),
-    g: Number(g.value)
-  };
-
-  const box = document.getElementById("result");
-  box.textContent = "計算中...";
-
-  try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-
-    const T1 = Number(data.T1);
-    const T2 = Number(data.T2);
-
-    // ✔ 成功パターン：JS側計算
-    const O1 = (payload.B - payload.S2) / T1;
-    const O2 = (payload.B - payload.S2) / T2;
-    const result = payload.S2 - payload.B + O1 + O2;
-
-    // 表更新
-    document.getElementById("valO1").innerText = O1.toFixed(4);
-    document.getElementById("valO2").innerText = O2.toFixed(4);
-    document.getElementById("valCalc").innerText = result.toFixed(4);
-
-    box.textContent =
-`T1: ${T1}
-T2: ${T2}
-RESULT: ${result}`;
-
-  } catch (err) {
-    box.textContent = "エラー: " + err.message;
-  }
-}
-
-// ✔ 入力同期（成功パターン）
-function updateTable() {
-  const s = Number(S.value) || 0;
-  const b = Number(B.value) || 0;
-
-  document.getElementById("valS").innerText = s || "-";
-  document.getElementById("valB").innerText = b || "-";
-}
-
-</script>
-
+      box.innerHTML = '<div class="loading">計算中...</div>';
+      
+      try {
+        // (B - S2) / T1 = O1, (B - S2) / T2 = O2
+        const O1 = (B - S2) / T1;
+        const O2 = (B - S2) / T2;
+        
+        box.innerHTML = `
+          <div><span class="label">O1 = (B-S2)/T1</span><span class="value">${O1.toFixed(6)}</span></div>
+          <div><span class="label">O2 = (B-S2)/T2</span><span class="value">${O2.toFixed(6)}</span></div>
+        `;
+        
+        // S, R, r1, r2, g は今後GAS側で使う想定で取得済み
+        console.log({ B, S2, S, R, r1, r2, g, T1, T2, O1, O2 });
+        
+      } catch (e) {
+        box.innerHTML = '<div class="loading">エラーが発生しました</div>';
+        console.error(e);
+      }
+    }
+  </script>
 </body>
 </html>
