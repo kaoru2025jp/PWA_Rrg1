@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>計算フォーム</title>
+</head>
+<body>
+
+<h3>入力</h3>
+
+<input id="B" placeholder="B"><br>
+<input id="S2" placeholder="S2"><br>
+<input id="S" placeholder="S"><br>
+<input id="R" placeholder="R"><br>
+<input id="r1" placeholder="r1"><br>
+<input id="r2" placeholder="r2"><br>
+<input id="g" placeholder="g"><br>
+
+<button onclick="send()">GAS送信</button>
+
+<hr>
+
+<pre id="output"></pre>
+
+<script>
+async function send() {
+
+  // ① 入力データ（r1 r2追加）
+  const payload = {
+    B: Number(document.getElementById("B").value),
+    S2: Number(document.getElementById("S2").value),
+    S: Number(document.getElementById("S").value),
+    R: Number(document.getElementById("R").value),
+    r1: Number(document.getElementById("r1").value),
+    r2: Number(document.getElementById("r2").value),
+    g: Number(document.getElementById("g").value)
+  };
+
+  // ② GASへ送信（T1, T2を受け取る）
+  const res = await fetch("YOUR_GAS_URL", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  const T1 = Number(data.T1);
+  const T2 = Number(data.T2);
+
+  // ③ JS側計算（変更なし）
+  const O1 = (payload.B - payload.S2) / T1;
+  const O2 = (payload.B - payload.S2) / T2;
+
+  const result = payload.S2 - payload.B + O1 + O2;
+
+  // ④ 表作成
+  document.getElementById("output").textContent =
+`S2: ${payload.S2}
+B: ${payload.B}
+O1: ${O1}
+O2: ${O2}
+RESULT: ${result}`;
+}
+</script>
+
+</body>
+</html>
