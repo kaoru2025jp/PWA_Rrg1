@@ -37,7 +37,7 @@ async function send() {
   };
 
   // ② GASへ送信（T1, T2を受け取る）
-  const res = await fetch("https://script.google.com/macros/s/AKfycbw5Mtp-2Pb2hmGm0VtRR9RHskHARpCU06IsrkStp20uKBMoM2Nf2wDDrgGr1APXTUnV/exec", {
+  const res = await fetch("https://script.google.com/macros/s/AKfycbyF_UKEN7yPvGe7WRFnQs9t7_Fj1SbpxA_Jw1UFEzYMKE8I3NnWCXJtofbfTRxDx047/exec", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
