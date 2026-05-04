@@ -92,12 +92,6 @@
       font-size: 14px;
       color: #666;
     }
-    .param-info {
-      font-size: 12px;
-      color: #888;
-      text-align: center;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
@@ -112,68 +106,68 @@
       <input id="r2" type="number" placeholder="r2" step="any">
       <input id="g" type="number" placeholder="g" step="any">
     </div>
-
-    <script>
-// ★ URLをここで完全に特定する
-const BASE_URL = "https://script.google.com/macros/s/AKfycbzuvocWXPQN4zP07H30edoZfgx4MATBJJP4I9VkTzmidOnI4kUiMklg7uh27n8jMJyy/exec";
-
-// URLパラメータ取得
-function getUrlParams() {
-  const params = new URL(BASE_URL).searchParams;
-  return {
-    T1: Number(params.get('T1')),
-    T2: Number(params.get('T2'))
-  };
-}
-
-// 初期表示
-window.onload = function() {
-  const { T1, T2 } = getUrlParams();
-  const info = document.getElementById("paramInfo");
-  info.textContent = `T1=${T1} / T2=${T2}`;
-};
-
-// 計算
-async function calc() {
-  const B = Number(document.getElementById("B").value);
-  const S2 = Number(document.getElementById("S2").value);
-  const S = Number(document.getElementById("S").value);
-  const R = Number(document.getElementById("R").value);
-  const r1 = Number(document.getElementById("r1").value);
-  const r2 = Number(document.getElementById("r2").value);
-  const g = Number(document.getElementById("g").value);
-
-  const { T1, T2 } = getUrlParams();
-  const box = document.getElementById("resultBox");
-
-  box.innerHTML = '<div class="loading">計算中...</div>';
-
-  try {
-    const O1 = (B - S2) / T1;
-    const O2 = (B - S2) / T2;
-
-    box.innerHTML = `
-      <div><span class="label">O1 = (B-S2)/T1</span><span class="value">${O1.toFixed(6)}</span></div>
-      <div><span class="label">O2 = (B-S2)/T2</span><span class="value">${O2.toFixed(6)}</span></div>
-    `;
-
-    console.log({ B, S2, S, R, r1, r2, g, T1, T2, O1, O2 });
-
-  } catch (e) {
-    box.innerHTML = '<div class="loading">エラーが発生しました</div>';
-    console.error(e);
-  }
-}
-</script>
     
     <button onclick="calc()">計算する</button>
-    <div class="param-info" id="paramInfo"></div>
     
     <div class="result" id="resultBox">
-      <div><span class="label">O1</span><span class="value" id="O1">-</span></div>
-      <div><span class="label">O2</span><span class="value" id="O2">-</span></div>
+      <div><span class="label">T1</span><span class="value" id="T1">-</span></div>
+      <div><span class="label">T2</span><span class="value" id="T2">-</span></div>
+      <hr>
+      <div><span class="label">O1 = (B-S2)/T1</span><span class="value" id="O1">-</span></div>
+      <div><span class="label">O2 = (B-S2)/T2</span><span class="value" id="O2">-</span></div>
     </div>
   </div>
 
-  body>
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzuvocWXPQN4zP07H30edoZfgx4MATBJJP4I9VkTzmidOnI4kUiMklg7uh27n8jMJyy/exec";
+
+    async function calc() {
+      const B = Number(document.getElementById("B").value);
+      const S2 = Number(document.getElementById("S2").value);
+      const S = Number(document.getElementById("S").value);
+      const R = Number(document.getElementById("R").value);
+      const r1 = Number(document.getElementById("r1").value);
+      const r2 = Number(document.getElementById("r2").value);
+      const g = Number(document.getElementById("g").value);
+      
+      const box = document.getElementById("resultBox");
+      box.innerHTML = '<div class="loading">GASからT1,T2取得中...</div>';
+      
+      try {
+        // 1. まずGASに7個の変数を送ってT1, T2をもらう
+        const res = await fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ B, S2, S, R, r1, r2, g })
+        });
+        const data = await res.json();
+        
+        const T1 = Number(data.T1);
+        const T2 = Number(data.T2);
+        
+        // T1, T2が0ならエラー
+        if (!T1 || !T2 || T1 === 0 || T2 === 0) {
+          box.innerHTML = '<div class="loading">エラー: GASからT1,T2が取得できませんでした</div>';
+          console.log('GAS response:', data);
+          return;
+        }
+
+        // 2. もらったT1, T2でO1, O2を計算
+        const O1 = (B - S2) / T1;
+        const O2 = (B - S2) / T2;
+        
+        box.innerHTML = `
+          <div><span class="label">T1</span><span class="value">${T1.toFixed(6)}</span></div>
+          <div><span class="label">T2</span><span class="value">${T2.toFixed(6)}</span></div>
+          <hr>
+          <div><span class="label">O1 = (B-S2)/T1</span><span class="value">${O1.toFixed(6)}</span></div>
+          <div><span class="label">O2 = (B-S2)/T2</span><span class="value">${O2.toFixed(6)}</span></div>
+        `;
+        
+      } catch (e) {
+        box.innerHTML = '<div class="loading">エラー: GAS通信に失敗しました</div>';
+        console.error(e);
+      }
+    }
+  </script>
+</body>
 </html>
