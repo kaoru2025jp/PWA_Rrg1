@@ -112,6 +112,59 @@
       <input id="r2" type="number" placeholder="r2" step="any">
       <input id="g" type="number" placeholder="g" step="any">
     </div>
+
+    <script>
+// ★ URLをここで完全に特定する
+const BASE_URL = "https://script.google.com/macros/s/AKfycbyusHsZVdxfg3HkNB-wymH3tqty87m_EyeaGKFecWPPogRuuFbWVH4ipJai2l6dvPf5/exec?T1=10&T2=20";
+
+// URLパラメータ取得
+function getUrlParams() {
+  const params = new URL(BASE_URL).searchParams;
+  return {
+    T1: Number(params.get('T1')),
+    T2: Number(params.get('T2'))
+  };
+}
+
+// 初期表示
+window.onload = function() {
+  const { T1, T2 } = getUrlParams();
+  const info = document.getElementById("paramInfo");
+  info.textContent = `T1=${T1} / T2=${T2}`;
+};
+
+// 計算
+async function calc() {
+  const B = Number(document.getElementById("B").value);
+  const S2 = Number(document.getElementById("S2").value);
+  const S = Number(document.getElementById("S").value);
+  const R = Number(document.getElementById("R").value);
+  const r1 = Number(document.getElementById("r1").value);
+  const r2 = Number(document.getElementById("r2").value);
+  const g = Number(document.getElementById("g").value);
+
+  const { T1, T2 } = getUrlParams();
+  const box = document.getElementById("resultBox");
+
+  box.innerHTML = '<div class="loading">計算中...</div>';
+
+  try {
+    const O1 = (B - S2) / T1;
+    const O2 = (B - S2) / T2;
+
+    box.innerHTML = `
+      <div><span class="label">O1 = (B-S2)/T1</span><span class="value">${O1.toFixed(6)}</span></div>
+      <div><span class="label">O2 = (B-S2)/T2</span><span class="value">${O2.toFixed(6)}</span></div>
+    `;
+
+    console.log({ B, S2, S, R, r1, r2, g, T1, T2, O1, O2 });
+
+  } catch (e) {
+    box.innerHTML = '<div class="loading">エラーが発生しました</div>';
+    console.error(e);
+  }
+}
+</script>
     
     <button onclick="calc()">計算する</button>
     <div class="param-info" id="paramInfo"></div>
@@ -122,56 +175,5 @@
     </div>
   </div>
 
-  <script>
-    // URLパラメータからT1, T2を取得する関数
-    function getUrlParams() {
-      const params = "https://script.google.com/macros/s/AKfycbyusHsZVdxfg3HkNB-wymH3tqty87m_EyeaGKFecWPPogRuuFbWVH4ipJai2l6dvPf5/exec";
-      return {
-        T1: Number(params.get('T1'))
-        T2: Number(params.get('T2'))
-      };
-    }
-
-    // ページ読み込み時にT1, T2を表示
-    window.onload = function() {
-      const { T1, T2 } = getUrlParams();
-      const info = document.getElementById("paramInfo");
-      
-
-    async function calc() {
-      const B = Number(document.getElementById("B").value);
-      const S2 = Number(document.getElementById("S2").value);
-      const S = Number(document.getElementById("S").value);
-      const R = Number(document.getElementById("R").value);
-      const r1 = Number(document.getElementById("r1").value);
-      const r2 = Number(document.getElementById("r2").value);
-      const g = Number(document.getElementById("g").value);
-      
-      const { T1, T2 } = getUrlParams();
-      const box = document.getElementById("resultBox");
-      
-      
-
-      box.innerHTML = '<div class="loading">計算中...</div>';
-      
-      try {
-        // (B - S2) / T1 = O1, (B - S2) / T2 = O2
-        const O1 = (B - S2) / T1;
-        const O2 = (B - S2) / T2;
-        
-        box.innerHTML = `
-          <div><span class="label">O1 = (B-S2)/T1</span><span class="value">${O1.toFixed(6)}</span></div>
-          <div><span class="label">O2 = (B-S2)/T2</span><span class="value">${O2.toFixed(6)}</span></div>
-        `;
-        
-        // S, R, r1, r2, g は今後GAS側で使う想定で取得済み
-        console.log({ B, S2, S, R, r1, r2, g, T1, T2, O1, O2 });
-        
-      } catch (e) {
-        box.innerHTML = '<div class="loading">エラーが発生しました</div>';
-        console.error(e);
-      }
-    }
-  </script>
-</body>
+  body>
 </html>
